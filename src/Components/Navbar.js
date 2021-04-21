@@ -18,7 +18,7 @@ export default function Navbar () {
         <div
             className={
                 css`
-                background: rgba(0,0,0,.7);
+                background: rgba(24,27,29);
                 color: white;
                 overflow: hidden;
                 `
