@@ -1,14 +1,31 @@
 import { cx, css } from '@emotion/css'
-import React, { useEffect } from 'react'
-import { useSelector } from 'react-redux'
+import React, { useEffect, useState } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
 import {title} from '../supports/format'
 
 export default function Collection () {
-    const {list} = useSelector(state => state)
+    // const {list} = useSelector(state => state)
+    const [list, setList] = useState( JSON.parse(localStorage.getItem('pokemon-collection')) )
+    const dispatch = useDispatch()
 
     useEffect(()=>{
         console.log(list)
-    })
+    },[])
+
+    const updateList = (index) => {
+        console.log(index)
+        let newList = [...list]
+        newList.splice(index,1)
+        console.log(newList)
+
+        dispatch({
+            type: 'POKE/UPDATE',
+            payload: newList
+        })
+
+        setList(newList)
+        localStorage.setItem('pokemon-collection', JSON.stringify(newList))
+    }
 
     return (
         <div
@@ -21,36 +38,69 @@ export default function Collection () {
                 `
             }
         >
-            <h1 class="ui header inverted">Collection</h1>
+            <h1 className="ui header inverted">Collection</h1>
 
             <div className={
                 cx(
                     "ui cards",
                     css`
                     display: flex;
-                    flex-direction: column;
+                    justify-content: center;
                     align-items: center;
                     `
                 )
             }>
                 {
                     list.length?
-                    list.map(pokemon => {
+                    list.map((pokemon, index) => {
+                        console.log(pokemon)
                         return (
-                            <div class="ui card">
-                                <div class="image">
-                                    <img src={pokemon.data.sprites?.other['official-artwork'].front_default}/>
+                            <div
+                                className={
+                                    cx(
+                                        "ui card",
+                                        css`
+                                        max-width: 250px!important;
+                                        `
+                                    )
+                                }
+                            >
+                                <div
+                                    className={
+                                        cx(
+                                            "image",
+                                            css`
+                                                min-height: 290px;
+                                            `
+                                        )
+                                    }
+                                >
+                                    <img src={pokemon.data.sprites.front_default}/>
                                 </div>
-                                <div class="content">
-                                    <a class="header">{title(pokemon.nickname)}</a>
-                                    {/* <div class="meta">
-                                    <span class="date">Joined in 2013</span>
-                                    </div> */}
-                                    <div class="description">
+                                <div className="content">
+                                    <a className="header">{title(pokemon.nickname)}</a>
+                                    
+                                    <div className="description">
                                         {title(pokemon.data.name)}
                                     </div>
+
+                                    <button
+                                        className={
+                                            cx(
+                                                "ui orange basic button",
+                                                css`
+                                                    margin-top: 10px!important;
+                                                `
+                                            )
+                                        }
+                                        onClick={()=>{
+                                            updateList(index)
+                                        }}
+                                    >
+                                        Release
+                                    </button>
                                 </div>
-                                <div class="extra content">
+                                <div className="extra content">
                                     {/* <i class="user icon"></i> */}
                                     XP 
                                     {pokemon.data.base_experience}

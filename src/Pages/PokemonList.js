@@ -12,17 +12,17 @@ import client from '../config/graphql'
 export default function PokemonList () {
 
     const [pokemons, setPokemons] = useState([])
-    const {message} = useSelector(state => state)
+    const [loading, setLoading] = useState(false)
+    const [isCovid, setIsCovid] = useState(false)
     const [displayNumber, setDisplayNumber] = useState(20)
     const [maxNumber, setMaxNumber] = useState(100)
-    const [loading, setLoading] = useState(false)
+    // const {list} = useSelector(state => state)
+    const list = JSON.parse(localStorage.getItem('pokemon-collection')) || []
 
-    const {list} = useSelector(state => state)
 
 
     useEffect(() => {
         loadPokemons()
-        console.log(message)
     },[])
 
     useEffect(async () => {
@@ -32,72 +32,56 @@ export default function PokemonList () {
     const loadPokemons = async () => {
         setLoading(true)
         client
-          .query({
-            query: gql`
-              query {
-                pokemons(limit: ${displayNumber-pokemons.length}, offset: ${pokemons.length}){
-                    results{
-                        name,
-                        url
-                    },
-                    count
-                }
-              }
-            `
-          })
-          .then( async result => {
-                let newPokemons = result.data.pokemons.results.map(poke => {
-                    return {
-                        name: poke.name,
-                        url: poke.url
-                    }
-                })
-                setMaxNumber(result.data.pokemons.count)
+        .query({
+        query: gql`
+            query {
+            pokemons(limit: ${displayNumber-pokemons.length}, offset: ${pokemons.length}){
+                results{
+                    name
+                    image
+                },
+                count
+            }
+            }
+        `
+        })
+        .then( async result => {
+            setMaxNumber(result.data.pokemons.count)
 
-                let newPokemonsData = await Promise.all(result.data.pokemons.results.map(async (pokemon, index) => {
-                    const poke = await client.query({
-                        query: gql`
-                            query {
-                                pokemon(name: "${pokemon.name}"){
-                                    name
-                                    sprites{
-                                        front_default,
-                                        front_shiny
-                                    }
+            let newPokemonsData = await Promise.all(result.data.pokemons.results.map(async (pokemon, index) => {
+                const poke = await client.query({
+                    query: gql`
+                        query {
+                            pokemon(name: "${pokemon.name}"){
+                                name
+                                sprites{
+                                    front_default,
+                                    front_shiny
                                 }
                             }
-                        `
+                        }
+                    `
+                })
+                    let owned = 0
+                    list.forEach(item => {
+                        if(item.data.name === poke.data.pokemon.name){
+                            owned++
+                        }
                     })
 
-                        // console.log(index)
-                        // newPokemons[index].front_default = poke.data.pokemon.sprites.front_default
-
-                        let owned = 0
-                        list.forEach(item => {
-                            if(item.data.name === poke.data.pokemon.name){
-                                owned++
-                            }
-                        })
-
-                        return {
-                            name: poke.data.pokemon.name,
-                            front_default: poke.data.pokemon.sprites.front_default,
-                            front_shiny: poke.data.pokemon.sprites.front_shiny,
-                            owned
-                        }
-                    
-                }))
+                    return {
+                        name: poke.data.pokemon.name,
+                        front_default: poke.data.pokemon.sprites.front_default,
+                        front_shiny: poke.data.pokemon.sprites.front_shiny,
+                        owned
+                    }
                 
-
-
-                console.log('finish')
-                console.log(newPokemonsData)
-                setLoading(false)
-                setPokemons([...pokemons, ...newPokemonsData])
-
+            }))
             
-          });
+            setLoading(false)
+            setPokemons([...pokemons, ...newPokemonsData])
 
+        });
     }
 
 
@@ -112,7 +96,28 @@ export default function PokemonList () {
                 `
             }
         >
-            <h1 class="ui header inverted">Pokemon World</h1>
+            <h1 className="ui header inverted">Pokemon World</h1>
+
+            <div
+                className={
+                    cx(
+                        "ui compact segment",
+                        css`
+                            margin: auto!important;
+                        `
+                    )
+                }
+            >
+                <div className="ui toggle checkbox">
+                    <input
+                        onChange={(e)=>{
+                            setIsCovid(e.target.checked)
+                        }}
+                        type="checkbox"/>
+                    <label>Covid Mode</label>
+                </div>
+            </div>
+
             <div>
                 <div className={
                     cx(
@@ -134,6 +139,7 @@ export default function PokemonList () {
                                 `
                             )
                         }
+                        data-testid="world"
                     >
                         {
                             pokemons.map((pokemon, index) => {
@@ -145,41 +151,64 @@ export default function PokemonList () {
                                             cx(
                                                 "card",
                                                 css`
-                                                    width: 230px!important;
+                                                max-width: 250px!important;
+                                                -webkit-tap-highlight-color: transparent;
                                                 `
                                             )
                                         }
+                                        data-testid="pokemon-list"
                                     >
-                                        <div class="image">
-                                            <img src={pokemon.front_default}/>
+                                        <div
+                                            className={
+                                                cx(
+                                                    "image",
+                                                    css`
+                                                    
+                                                    `
+                                                )
+                                            }
+                                        
+                                        >
+                                            <img
+                                                className={
+                                                    css`
+
+                                                    `
+                                                }
+                                                src={ isCovid ? pokemon.front_shiny : pokemon.front_default }
+                                            />
                                         </div>
-                                        <div class="content">
-                                            <div class="header">{title(pokemon.name)}</div>
-                                            {/* <div class="meta">
-                                                <a>Friends</a>
-                                            </div> */}
-                                            <div class="description">
-                                                <div class="ui label">
-                                                    In Collection {pokemon.owned}
+                                        <div
+                                            className="content"
+                                        >
+                                            <div
+                                                className={
+                                                    cx(
+                                                        "header",
+                                                        css`
+                                                        
+                                                        `
+                                                    )
+                                                }
+                                            >{title(pokemon.name)}</div>
+                                            
+                                            <div className="description">
+                                                In Collection 
+                                                <div
+                                                    className={
+                                                        cx(
+                                                            "ui label",
+                                                            css`
+                                                            margin-left: 10px!important;
+                                                            `
+                                                        )
+                                                    }
+                                                >
+                                                    {pokemon.owned}
                                                 </div>
                                             </div>
                                         </div>
-                                        {/* <div class="extra content">
-                                            <span class="right floated">
-                                                Joined in 2013
-                                            </span>
-                                            <span>
-                                                <i class="user icon"></i>
-                                                75 Friends
-                                            </span>
-                                        </div> */}
                                     </Link>
-                                    // <div className="item" key={index}>
-                                    //     <div className="content">
-                                    //     <Link to={`/details/${pokemon.name}`} className="header">{pokemon.name}</Link>
-                                    //     {/* <div className="description">Updated 10 mins ago</div> */}
-                                    //     </div>
-                                    // </div>
                                 )
                             })
                         }
@@ -197,7 +226,9 @@ export default function PokemonList () {
                                     }
                                     setDisplayNumber(newDisplayNumber)
                                 }}
-                                className="ui button big">
+                                className="ui button big"
+                                data-testid="button-more-pokemons"
+                            >
                                 More
                             </button>
                         </div>

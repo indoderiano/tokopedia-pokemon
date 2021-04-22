@@ -9,24 +9,6 @@ import { Provider } from 'react-redux'
 import { ApolloProvider } from '@apollo/client/react'
 import store from './redux'
 import client from './config/graphql'
-import { gql } from '@apollo/client'
-
-// client
-//   .query({
-//     query: gql`
-//       query test {
-//         pokemons(limit: 20, offset: 0){
-//           results{
-//             name
-//           }
-//         }
-//       }
-//     `
-//   })
-//   .then(result => {
-//     console.log('index.js')
-//     console.log(result)
-//   });
 
 ReactDOM.render(
   // <React.StrictMode>

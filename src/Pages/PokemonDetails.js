@@ -10,7 +10,9 @@ import { gql, useQuery } from '@apollo/client'
 
 export default function PokemonDetails () {
 
-    let { id } = useParams()
+    let { name } = useParams()
+    console.log('=============')
+    console.log(name)
     const [pokemon, setPokemon] = useState({})
     const [movesNumber, setmovesNumber] = useState(3)
     const [isCatching, setIsCatching] = useState(false)
@@ -20,13 +22,33 @@ export default function PokemonDetails () {
     const [errNickname, setErrNicknamed] = useState(false)
     const dispatch = useDispatch()
     const [isRedirect, setIsRedirect] = useState(false)
+    // const {list} = useSelector(state => state)
+    const list = JSON.parse(localStorage.getItem('pokemon-collection')) || []
 
     const GET_POKEMON = gql`
         query {
-                pokemon(name: "bulbasaur"){
-                sprites{
-                    front_default
-                }
+                pokemon(name: "${name}"){
+                    name
+                    sprites{
+                        front_default
+                    }
+                    types{
+                        type{
+                            name
+                        }
+                    }
+                    base_experience
+                    height
+                    abilities{
+                        ability{
+                            name
+                        }
+                    }
+                    moves{
+                        move{
+                            name
+                        }
+                    }
             }
         }
     `
@@ -35,12 +57,11 @@ export default function PokemonDetails () {
     console.log(data)
 
     useEffect(()=>{
-        console.log(id)
         loadPokemon()
     },[])
 
     const loadPokemon = () => {
-        axios.get(`https://pokeapi.co/api/v2/pokemon/${id}`)
+        axios.get(`https://pokeapi.co/api/v2/pokemon/${name}`)
         .then(response => {
             console.log(response.data)
             setPokemon(response.data)
@@ -60,26 +81,47 @@ export default function PokemonDetails () {
             }
             setOpen(true)
             setIsCatching(false)
-        }, 3000)
+        }, 1000)
     }
 
     const savePokemon = () => {
+
+        // check for other nicknames
+        let check = true
+        list.forEach(poke => {
+            if(poke.nickname.toLowerCase() === nickname.toLowerCase()){
+                check = false
+            }
+        })
+
         if(!nickname){
-            setErrNicknamed(true)
+            setErrNicknamed('You must give nickname to your pokemon')
+        }else if(!check){
+            setErrNicknamed(`There is already "${nickname}" in your collection`)
         }else{
+            let newPokemon = {
+                nickname,
+                data: data.pokemon
+            }
+            localStorage.setItem('pokemon-collection', JSON.stringify([...list, newPokemon]))
             dispatch({
                 type: 'POKE/ADD',
-                payload: {
-                    nickname,
-                    data: pokemon
-                }
+                payload: newPokemon
             })
             // setOpen(false)
             setIsRedirect(true)
         }
     }
 
-    if(!pokemon.name){
+    if(error){
+        return (
+            <div>
+                Error
+            </div>
+        )
+    }
+
+    if(loading){
         return (
             <div
                 className={
@@ -90,6 +132,7 @@ export default function PokemonDetails () {
                     min-height: calc(100vh - 68px);
                     `
                 }
+                data-testid="page-details-loading"
             >
                 <Loading/>
             </div>
@@ -106,9 +149,16 @@ export default function PokemonDetails () {
                 min-height: calc(100vh - 68px);
                 `
             }
+            data-testid="container"
         >
-            <h1 class="ui header inverted">{title(pokemon.name)}</h1>
-            <div>
+            <h1 className="ui header inverted">{title(data.pokemon.name)}</h1>
+            <div
+                className={
+                    css`
+                    min-height: 300px;
+                    `
+                }
+            >
                 <img
                     className={
                     cx(
@@ -118,12 +168,11 @@ export default function PokemonDetails () {
                         `
                     )
                     }
-                    src={pokemon.sprites?.other['official-artwork'].front_default}></img>
+                    src={pokemon.sprites? pokemon.sprites.other['official-artwork'].front_default : data.pokemon.sprites?.front_default}></img>
             </div>
 
 
             <button
-                id='catch'
                 disabled={isCatching ? true : false}
                 onClick={catchPokemon}
                 className={
@@ -131,9 +180,11 @@ export default function PokemonDetails () {
                         "huge ui button",
                         css`
                         position: relative;
+                        margin-top: 20px!important;
                         `
                     )
                 }
+                data-testid="button-catch"
             >
                 {
                     isCatching ? 'Catching Pokemon ...' : 'Catch'
@@ -141,9 +192,9 @@ export default function PokemonDetails () {
                 
                 {
                     isCatching ?
-                    <div class="ui active inverted dimmer">
-                        <div class="ui loader"></div>
-                        {/* <div class="ui text loader">Wait...</div> */}
+                    <div className="ui active inverted dimmer">
+                        <div className="ui loader"></div>
+                        {/* <div className="ui text loader">Wait...</div> */}
                     </div>
                     : null
                 }
@@ -183,7 +234,7 @@ export default function PokemonDetails () {
                 </div>
             </div>
 
-            <h2 class="ui header inverted">Base Experience</h2>
+            <h2 className="ui header inverted">Base Experience</h2>
             <h5
                 className={
                     cx(
@@ -196,7 +247,7 @@ export default function PokemonDetails () {
                 }>{pokemon.base_experience}
             </h5>
 
-            <h2 class="ui header inverted">Height</h2>
+            <h2 className="ui header inverted">Height</h2>
             <h5
                 className={
                     cx(
@@ -321,10 +372,10 @@ export default function PokemonDetails () {
                 {
                     isCatched?
                     <Modal.Content image>
-                        <Image size='medium' src={pokemon.sprites?.other['dream_world'].front_default} wrapped />
+                        <Image size='medium' src={pokemon.sprites? pokemon.sprites?.other['dream_world'].front_default : data.pokemon.sprites?.front_default} wrapped />
                         <Modal.Description>
                         <Header>Give your pokemon a nickname</Header>
-                        <div class="ui input focus">
+                        <div className="ui input focus">
                             <input
                                 type="text"
                                 placeholder="Nickname"
@@ -336,9 +387,9 @@ export default function PokemonDetails () {
                         </div>
                         {
                             errNickname?
-                            <div class="ui warning message">
-                                <div class="header">
-                                    You must give nickname to your pokemon
+                            <div className="ui warning message">
+                                <div className="header">
+                                    {errNickname}
                                 </div>
                             </div>
                             : null
@@ -354,7 +405,17 @@ export default function PokemonDetails () {
                         </p>
                         </Modal.Description>
                     </Modal.Content>
-                    : null
+                    : 
+                    <Modal.Content image>
+                        <Image
+                            className={
+                                css`
+                                margin: auto
+                                `
+                            }
+                            size='medium' src='https://www.onlygfx.com/wp-content/uploads/2020/05/fail-stamp-7.png' wrapped />
+                        
+                    </Modal.Content>
                 }
                 <Modal.Actions>
                     {
@@ -367,13 +428,6 @@ export default function PokemonDetails () {
                             Ok
                         </Button>
                     }
-                    {/* <Button
-                    content="Yep, that's me"
-                    labelPosition='right'
-                    icon='checkmark'
-                    onClick={() => setOpen(false)}
-                    positive
-                    /> */}
                 </Modal.Actions>
             </Modal>
 

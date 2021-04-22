@@ -9,18 +9,18 @@ import { Switch, Route } from 'react-router-dom'
 function App() {
   return (
     <div className="App">
-      <Navbar/>
-      <Switch>
-        <Route exact path='/'>
-          <Home/>
-        </Route>
-        <Route exact path='/details/:id'>
-          <Details/>
-        </Route>
-        <Route exact path='/collection'>
-          <Collection/>
-        </Route>
-      </Switch>
+        <Navbar/>
+        <Switch>
+          <Route exact path='/'>
+            <Home/>
+          </Route>
+          <Route exact path='/details/:name'>
+            <Details/>
+          </Route>
+          <Route exact path='/collection'>
+            <Collection/>
+          </Route>
+        </Switch>
     </div>
   );
 }
