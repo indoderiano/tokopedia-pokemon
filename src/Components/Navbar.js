@@ -1,6 +1,7 @@
 import { css, cx } from '@emotion/css'
 import styled from '@emotion/styled'
-import React, { useState } from 'react'
+import React, { useContext, useState } from 'react'
+import ThemeContext from '../context'
 import { Link } from 'react-router-dom'
 import logo from '../images/poke-logo.png'
 
@@ -13,6 +14,7 @@ const List = styled.div(props => ({
 
 export default function Navbar () {
     const [isOpen, setIsOpen] = useState(false)
+    const {theme} = useContext(ThemeContext)
 
     return (
         <div
@@ -20,7 +22,7 @@ export default function Navbar () {
                 cx(
                     "",
                     css`
-                    background: rgba(24,27,29)!important;
+                    background: ${theme.background}!important;
                     color: white;
                     overflow: hidden;
                     border-bottom: .2px solid rgba(255,255,255,.4);
@@ -37,7 +39,7 @@ export default function Navbar () {
                         display: flex;
                         padding: 0px 10px 0px;
                         margin: 0px!important;
-                        background: rgba(24,27,29)!important;
+                        background: ${theme.background}!important;
                         height: 68px;
                         
                         flex-direction: row;
@@ -55,12 +57,13 @@ export default function Navbar () {
                     }
                 >
                     <img
+                        alt="logo"
                         className={
                             css`
-                            width: 150px;
+                            width: 130px;
                             position: absolute;
                             top: 50%;
-                            left: 10px;
+                            left: 30px;
                             transform: translate(0%, -50%);
                             
                             `

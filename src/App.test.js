@@ -3,7 +3,7 @@ import { BrowserRouter } from 'react-router-dom'
 import App from './App';
 
 test('renders learn react link', () => {
-  const { getByText, debug } = render(<BrowserRouter><App /></BrowserRouter>);
+  const { getByText} = render(<BrowserRouter><App /></BrowserRouter>);
   const linkElement = getByText("Covid Mode");
   expect(linkElement).toBeInTheDocument();
 });

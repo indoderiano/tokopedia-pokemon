@@ -1,68 +1,81 @@
-import { findByTestId, fireEvent, render, waitFor, waitForElementToBeRemoved } from '@testing-library/react'
-import { BrowserRouter, Route } from 'react-router-dom'
+import { fireEvent, render } from '@testing-library/react'
+import { BrowserRouter, Route, MemoryRouter, Switch } from 'react-router-dom'
 import { Provider } from 'react-redux'
+import { title } from '../supports/format'
 import store from '../redux'
 import { ApolloProvider } from '@apollo/client/react'
 import client from '../config/graphql'
 import PokemonDetails from './PokemonDetails'
+import Home from './PokemonList'
+import Collection from './Collection'
+import App from '../App'
+
+const Page = <Provider store={store}>
+<ApolloProvider client={client}>
+    <BrowserRouter>
+        <MemoryRouter initialEntries={['/details/ivysaur']}>
+            <App/>
+        </MemoryRouter>
+    </BrowserRouter>
+</ApolloProvider>
+</Provider>
+
+const { getByTestId, findByTestId, queryByTestId, getByText, queryByText } = render(Page)
 
 describe("Page Pokemon Details Testing", () => {
-    jest.mock('react-router-dom', () => ({
-        ...jest.requireActual('react-router-dom'), // use actual for all non-hook parts
-        useParams: () => ({
-          name: 'ivysaur'
-        }),
-        // useRouteMatch: () => ({ url: '/details/ivysaur' }),
-      }));
-    // jest.mock('react-router', () => ({
-    //     useParams: jest.fn().mockReturnValue({ name: 'ivysaur' }),
-    //   }));
-    it("Testing Catch Button", async () => {
-        const { findAllByTestId, getByTestId, debug, findByTestId, queryByTestId } = render(
-            <Provider store={store}>
-                <ApolloProvider client={client}>
-                    <BrowserRouter>
-                        <Route exact path='/details/:name'>
-                            <PokemonDetails/>
-                        </Route>
-                    </BrowserRouter>
-                </ApolloProvider>
-            </Provider>
-        )
-        await findByTestId("container")
-        debug(getByTestId("container"))
-        // await findByTestId("button-catch")
-        // debug(getByTestId("container"))
-        // debug(getByTestId("button-catch"))
 
-        debug(getByTestId("page-details-loading"))
-        // await waitForElementToBeRemoved(() => {
-        //     queryByTestId("page-details-loading")
-        // })
-
-        // const buttonCatch = getByTestId("button-catch")
-        // expect(buttonCatch).toBeInTheDocument()
+    it("Testing Catch Pokemon", async () => {
+        let loading = getByTestId("page-details-loading")
+        expect(loading).toBeInTheDocument()
         
-        // const world = getByTestId("world")
-        // debug(world)
-        // await waitFor (() => {
-        //     const pokemons = getByTestId("pokemon-list")
-        //     debug(world)
-        // })
-        // await findAllByTestId("pokemon-list", undefined, { timeout: 5000 })
-        // debug(world)
-        // let count = world.childElementCount
-        // console.log('how many pokemons')
-        // console.log(count)
-        // expect(count).toBe(20)
-        // let buttonLoad = getByTestId('button-more-pokemons')
-        // fireEvent.click(buttonLoad)
-        // let buttonLoadAppear = await findByTestId('button-more-pokemons', undefined, { timeout: 5000 })
-        // debug(buttonLoadAppear)
-        // console.log(world.childElementCount)
-        // console.log(count)
-        // count = world.childElementCount
-        // expect(count).toBe(30)
+        await findByTestId("details", undefined, { timeout: 5000 })
 
+        let details = getByTestId("details")
+        expect(details).toBeInTheDocument()
+
+        let buttonCatch = getByTestId("button-catch")
+        expect(buttonCatch).toBeInTheDocument()
+
+        fireEvent.click(buttonCatch)
+
+        await findByTestId("catch-result", undefined, { timeout: 2000 })
+
+        if(queryByTestId("success")){
+            let testingPokemonNickName = 'testing1234'
+            console.log('pokemon is catched')
+            let nickname = getByTestId("nickname")
+
+            fireEvent.change(nickname, {
+                target: { value: testingPokemonNickName }
+            })
+
+            let buttonSavePokemon = getByTestId("button-save-pokemon")
+            expect(buttonSavePokemon).toBeInTheDocument()
+
+            fireEvent.click(buttonSavePokemon)
+
+            await findByTestId("collection")
+            let collection = getByTestId("collection")
+            expect(collection).toBeInTheDocument()
+            let newPokemon = getByText(title(testingPokemonNickName))
+            expect(newPokemon).toBeInTheDocument()
+            let buttonRelease = getByTestId('button-release')
+
+            fireEvent.click(buttonRelease)
+
+            let pokemonReleased = queryByText(title(testingPokemonNickName))
+            expect(pokemonReleased).toBeNull()
+        }
+
+        if(queryByTestId("fail")){
+            console.log('pokemon escaped')
+            let buttonFailOk = getByTestId("button-fail-ok")
+
+            fireEvent.click(buttonFailOk)
+
+            await findByTestId("world")
+            let world = getByTestId("world")
+            expect(world).toBeInTheDocument()
+        }
     })
 })

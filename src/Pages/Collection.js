@@ -1,28 +1,17 @@
 import { cx, css } from '@emotion/css'
-import React, { useEffect, useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
+import React, { useState, useContext } from 'react'
+import ThemeContext from '../context'
 import {title} from '../supports/format'
 
 export default function Collection () {
-    // const {list} = useSelector(state => state)
-    const [list, setList] = useState( JSON.parse(localStorage.getItem('pokemon-collection')) )
-    const dispatch = useDispatch()
 
-    useEffect(()=>{
-        console.log(list)
-    },[])
+    const {theme, toggleThemes} = useContext(ThemeContext)
+    const [list, setList] = useState( JSON.parse(localStorage.getItem('pokemon-collection')) || [] )
+    
 
     const updateList = (index) => {
-        console.log(index)
         let newList = [...list]
         newList.splice(index,1)
-        console.log(newList)
-
-        dispatch({
-            type: 'POKE/UPDATE',
-            payload: newList
-        })
-
         setList(newList)
         localStorage.setItem('pokemon-collection', JSON.stringify(newList))
     }
@@ -31,7 +20,7 @@ export default function Collection () {
         <div
             className={
                 css`
-                background: rgba(24,27,29);
+                background: ${theme.background}!important;
                 color: white;
                 padding: 20px 0 30px;
                 min-height: calc(100vh - 68px);
@@ -40,22 +29,25 @@ export default function Collection () {
         >
             <h1 className="ui header inverted">Collection</h1>
 
-            <div className={
-                cx(
-                    "ui cards",
-                    css`
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                    `
-                )
-            }>
+            <div
+                className={
+                    cx(
+                        "ui cards",
+                        css`
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        `
+                    )
+                }
+                data-testid="collection"
+            >
                 {
                     list.length?
                     list.map((pokemon, index) => {
-                        console.log(pokemon)
                         return (
                             <div
+                                key={index}
                                 className={
                                     cx(
                                         "ui card",
@@ -75,11 +67,10 @@ export default function Collection () {
                                         )
                                     }
                                 >
-                                    <img src={pokemon.data.sprites.front_default}/>
+                                    <img alt='poke-collection' src={pokemon.data.sprites.front_default}/>
                                 </div>
                                 <div className="content">
-                                    <a className="header">{title(pokemon.nickname)}</a>
-                                    
+                                    <h3 className="ui header">{title(pokemon.nickname)}</h3>
                                     <div className="description">
                                         {title(pokemon.data.name)}
                                     </div>
@@ -96,12 +87,12 @@ export default function Collection () {
                                         onClick={()=>{
                                             updateList(index)
                                         }}
+                                        data-testid="button-release"
                                     >
                                         Release
                                     </button>
                                 </div>
                                 <div className="extra content">
-                                    {/* <i class="user icon"></i> */}
                                     XP 
                                     {pokemon.data.base_experience}
                                 </div>

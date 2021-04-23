@@ -1,27 +1,25 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useContext } from 'react'
+import ThemeContext from '../context'
 import { Button, Header, Image, Modal } from 'semantic-ui-react'
 import { useParams, Redirect } from 'react-router'
 import {title} from '../supports/format'
 import Loading from '../Components/Loading'
 import axios from 'axios'
 import { css, cx } from '@emotion/css'
-import { useDispatch, useSelector } from 'react-redux'
 import { gql, useQuery } from '@apollo/client'
 
 export default function PokemonDetails () {
 
     let { name } = useParams()
-    console.log('=============')
-    console.log(name)
+    const {theme, toggleThemes} = useContext(ThemeContext)
     const [pokemon, setPokemon] = useState({})
     const [movesNumber, setmovesNumber] = useState(3)
-    const [isCatching, setIsCatching] = useState(false)
+    const [isCatching] = useState(false)
     const [isCatched, setIsCatched] = useState(true)
     const [nickname, setNickname] = useState('')
     const [open, setOpen] = useState(false)
     const [errNickname, setErrNicknamed] = useState(false)
-    const dispatch = useDispatch()
-    const [isRedirect, setIsRedirect] = useState(false)
+    const [redirect, setRedirect] = useState('')
     // const {list} = useSelector(state => state)
     const list = JSON.parse(localStorage.getItem('pokemon-collection')) || []
 
@@ -53,40 +51,36 @@ export default function PokemonDetails () {
         }
     `
     const {loading, error, data} = useQuery(GET_POKEMON)
-    console.log('pokemon')
-    console.log(data)
+    
 
     useEffect(()=>{
-        loadPokemon()
-    },[])
-
-    const loadPokemon = () => {
+        // One particular nice image needs to be extracted from this API Request
+        // which does not exist from GraphQL
         axios.get(`https://pokeapi.co/api/v2/pokemon/${name}`)
         .then(response => {
-            console.log(response.data)
             setPokemon(response.data)
         })
         .catch(err => {
             console.log(err)
         })
-    }
+    },[name])
 
     const catchPokemon = () => {
-        setIsCatching(true)
-        setTimeout(()=>{
-            if( Math.random() < .5 ){
-                setIsCatched(true)
-            }else{
-                setIsCatched(false)
-            }
-            setOpen(true)
-            setIsCatching(false)
-        }, 1000)
+        // setIsCatching(true)
+        
+        if( Math.random() < .5 ){
+            setIsCatched(true)
+        }else{
+            setIsCatched(false)
+        }
+        setOpen(true)
+        // setIsCatching(false)
+            
     }
 
     const savePokemon = () => {
 
-        // check for other nicknames
+        // Check for other nicknames
         let check = true
         list.forEach(poke => {
             if(poke.nickname.toLowerCase() === nickname.toLowerCase()){
@@ -104,12 +98,12 @@ export default function PokemonDetails () {
                 data: data.pokemon
             }
             localStorage.setItem('pokemon-collection', JSON.stringify([...list, newPokemon]))
-            dispatch({
-                type: 'POKE/ADD',
-                payload: newPokemon
-            })
-            // setOpen(false)
-            setIsRedirect(true)
+            // dispatch({
+            //     type: 'POKE/ADD',
+            //     payload: newPokemon
+            // })
+            
+            setRedirect('/collection')
         }
     }
 
@@ -126,7 +120,7 @@ export default function PokemonDetails () {
             <div
                 className={
                     css`
-                    background: rgba(24,27,29);
+                    background: ${theme.background}!important;
                     color: white;
                     padding: 20px 0 30px;
                     min-height: calc(100vh - 68px);
@@ -143,13 +137,13 @@ export default function PokemonDetails () {
         <div
             className={
                 css`
-                background: rgba(24,27,29);
+                background: ${theme.background}!important;
                 color: white;
                 padding: 20px 0 30px;
                 min-height: calc(100vh - 68px);
                 `
             }
-            data-testid="container"
+            data-testid="details"
         >
             <h1 className="ui header inverted">{title(data.pokemon.name)}</h1>
             <div
@@ -159,7 +153,11 @@ export default function PokemonDetails () {
                     `
                 }
             >
+                {/* ============================== */}
+                {/* This one particular nice image */}
+                {/* ============================== */}
                 <img
+                    alt="poke-art"
                     className={
                     cx(
                         "ui medium rounded image",
@@ -168,7 +166,7 @@ export default function PokemonDetails () {
                         `
                     )
                     }
-                    src={pokemon.sprites? pokemon.sprites.other['official-artwork'].front_default : data.pokemon.sprites?.front_default}></img>
+                    src={pokemon.sprites? pokemon.sprites.other['official-artwork'].front_default : data.pokemon.sprites?.front_default}/>
             </div>
 
 
@@ -194,7 +192,6 @@ export default function PokemonDetails () {
                     isCatching ?
                     <div className="ui active inverted dimmer">
                         <div className="ui loader"></div>
-                        {/* <div className="ui text loader">Wait...</div> */}
                     </div>
                     : null
                 }
@@ -324,14 +321,12 @@ export default function PokemonDetails () {
                                     </h5>
                                 )
                             }
+                            return null
                         })
                     }
                     
                     {
                         pokemon.moves?.length-1 > movesNumber?
-                        // <div class="ui mini label">
-                        //     Mini
-                        // </div>
                         <div
                             key='spe'
                             onClick={()=>{setmovesNumber(movesNumber+5)}}
@@ -356,12 +351,12 @@ export default function PokemonDetails () {
             <Modal
                 onClose={() => {
                     setOpen(false)
-                    setIsRedirect(true)
+                    setRedirect('/')
                 }}
                 onOpen={() => setOpen(true)}
                 open={open}
-                // trigger={<Button>Show Modal</Button>}
-                >
+                data-testid="catch-result"
+            >
                 <Modal.Header>
                     {
                         isCatched?
@@ -371,7 +366,7 @@ export default function PokemonDetails () {
                 </Modal.Header>
                 {
                     isCatched?
-                    <Modal.Content image>
+                    <Modal.Content image data-testid="success">
                         <Image size='medium' src={pokemon.sprites? pokemon.sprites?.other['dream_world'].front_default : data.pokemon.sprites?.front_default} wrapped />
                         <Modal.Description>
                         <Header>Give your pokemon a nickname</Header>
@@ -383,6 +378,7 @@ export default function PokemonDetails () {
                                     setNickname(e.target.value)
                                 }}
                                 value={nickname}
+                                data-testid="nickname"
                             />
                         </div>
                         {
@@ -406,7 +402,7 @@ export default function PokemonDetails () {
                         </Modal.Description>
                     </Modal.Content>
                     : 
-                    <Modal.Content image>
+                    <Modal.Content image data-testid="fail">
                         <Image
                             className={
                                 css`
@@ -420,11 +416,11 @@ export default function PokemonDetails () {
                 <Modal.Actions>
                     {
                         isCatched?
-                        <Button color='black' onClick={savePokemon}>
+                        <Button color='black' onClick={savePokemon} data-testid="button-save-pokemon">
                             Save Pokemon
                         </Button>
                         :
-                        <Button color='black' onClick={() => setIsRedirect(true)}>
+                        <Button color='black' onClick={() => setRedirect('/')} data-testid="button-fail-ok">
                             Ok
                         </Button>
                     }
@@ -432,8 +428,8 @@ export default function PokemonDetails () {
             </Modal>
 
             {
-                isRedirect?
-                <Redirect to='/'/>
+                redirect?
+                <Redirect to={redirect}/>
                 : null
             }
             

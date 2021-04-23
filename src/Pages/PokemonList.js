@@ -1,16 +1,16 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useContext } from 'react'
 import { css, cx } from '@emotion/css'
-import axios from 'axios'
+import ThemeContext from '../context'
 import Loading from '../Components/Loading'
 import {title} from '../supports/format'
 import { Link } from 'react-router-dom'
-import { useSelector } from 'react-redux'
-import { gql, useQuery } from '@apollo/client'
+import { gql } from '@apollo/client'
 import client from '../config/graphql'
 
 
 export default function PokemonList () {
 
+    const {theme, toggleThemes} = useContext(ThemeContext)
     const [pokemons, setPokemons] = useState([])
     const [loading, setLoading] = useState(false)
     const [isCovid, setIsCovid] = useState(false)
@@ -20,16 +20,7 @@ export default function PokemonList () {
     const list = JSON.parse(localStorage.getItem('pokemon-collection')) || []
 
 
-
     useEffect(() => {
-        loadPokemons()
-    },[])
-
-    useEffect(async () => {
-        loadPokemons()
-    },[displayNumber])
-
-    const loadPokemons = async () => {
         setLoading(true)
         client
         .query({
@@ -47,7 +38,7 @@ export default function PokemonList () {
         })
         .then( async result => {
             setMaxNumber(result.data.pokemons.count)
-
+    
             let newPokemonsData = await Promise.all(result.data.pokemons.results.map(async (pokemon, index) => {
                 const poke = await client.query({
                     query: gql`
@@ -68,7 +59,7 @@ export default function PokemonList () {
                             owned++
                         }
                     })
-
+    
                     return {
                         name: poke.data.pokemon.name,
                         front_default: poke.data.pokemon.sprites.front_default,
@@ -80,16 +71,17 @@ export default function PokemonList () {
             
             setLoading(false)
             setPokemons([...pokemons, ...newPokemonsData])
-
+    
         });
-    }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    },[displayNumber])
 
 
     return (
         <div
             className={
                 css`
-                background: rgba(24,27,29);
+                background: ${theme.background};
                 color: white;
                 padding: 20px 0 30px;
                 min-height: calc(100vh - 68px);
@@ -112,8 +104,13 @@ export default function PokemonList () {
                     <input
                         onChange={(e)=>{
                             setIsCovid(e.target.checked)
+                            if(e.target.checked !== theme.isCovid){
+                                toggleThemes()
+                            }
                         }}
-                        type="checkbox"/>
+                        type="checkbox"
+                        data-testid="select-covid"
+                    />
                     <label>Covid Mode</label>
                 </div>
             </div>
@@ -170,12 +167,14 @@ export default function PokemonList () {
                                         
                                         >
                                             <img
+                                                alt="poke-icon"
                                                 className={
                                                     css`
 
                                                     `
                                                 }
                                                 src={ isCovid ? pokemon.front_shiny : pokemon.front_default }
+                                                data-testid={theme.isCovid ? 'poke-covid' : 'poke-normal'}
                                             />
                                         </div>
                                         <div

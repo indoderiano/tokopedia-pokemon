@@ -1,5 +1,6 @@
 import React from 'react'
 import {css} from '@emotion/css'
+import pokeball from '../images/pokeball-loading.gif'
 
 export default function Loading () {
     return (
@@ -15,6 +16,7 @@ export default function Loading () {
             }
         >
             <img
+                alt="loading"
                 className={
                     css`
                         position: absolute;
@@ -24,7 +26,7 @@ export default function Loading () {
                     `
                 }
                 width='240%'
-                src='https://cdn.dribbble.com/users/621155/screenshots/2835314/simple_pokeball.gif'/>           
+                src={pokeball}/>           
         </div>
     )
 }
