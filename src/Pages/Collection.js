@@ -5,7 +5,7 @@ import {title} from '../supports/format'
 
 export default function Collection () {
 
-    const {theme, toggleThemes} = useContext(ThemeContext)
+    const {theme} = useContext(ThemeContext)
     const [list, setList] = useState( JSON.parse(localStorage.getItem('pokemon-collection')) || [] )
     
 

@@ -13,7 +13,8 @@ const themes = {
       isCovid: true
   },
   normal: {
-      background: "rgba(24,27,29)",
+      // background: "rgba(24,27,29)",
+      background: "#181B1D",
       isCovid: false
   }
 };

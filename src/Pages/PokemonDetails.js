@@ -11,7 +11,7 @@ import { gql, useQuery } from '@apollo/client'
 export default function PokemonDetails () {
 
     let { name } = useParams()
-    const {theme, toggleThemes} = useContext(ThemeContext)
+    const {theme} = useContext(ThemeContext)
     const [pokemon, setPokemon] = useState({})
     const [movesNumber, setmovesNumber] = useState(3)
     const [isCatching] = useState(false)

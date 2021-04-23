@@ -13,7 +13,7 @@ export default function PokemonList () {
     const {theme, toggleThemes} = useContext(ThemeContext)
     const [pokemons, setPokemons] = useState([])
     const [loading, setLoading] = useState(false)
-    const [isCovid, setIsCovid] = useState(false)
+    const [isCovid, setIsCovid] = useState(theme.isCovid)
     const [displayNumber, setDisplayNumber] = useState(20)
     const [maxNumber, setMaxNumber] = useState(100)
     // const {list} = useSelector(state => state)
